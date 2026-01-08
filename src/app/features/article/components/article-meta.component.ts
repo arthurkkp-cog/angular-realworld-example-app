@@ -1,31 +1,32 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { Article } from '../models/article.model';
-import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
+// AngularJS Article Meta Directive
+// Displays article metadata (author, date) with transcluded content
 
-@Component({
-  selector: 'app-article-meta',
-  template: `
-    <div class="article-meta">
-      <a [routerLink]="['/profile', article.author.username]">
-        <img [src]="article.author.image" />
-      </a>
+angular.module('conduitApp').directive('appArticleMeta', [
+  function () {
+    return {
+      restrict: 'E',
+      transclude: true,
+      scope: {
+        article: '=',
+      },
+      template: `
+        <div class="article-meta">
+          <a ng-href="#!/profile/{{ article.author.username }}">
+            <img ng-src="{{ article.author.image }}" />
+          </a>
 
-      <div class="info">
-        <a class="author" [routerLink]="['/profile', article.author.username]">
-          {{ article.author.username }}
-        </a>
-        <span class="date">
-          {{ article.createdAt | date: 'longDate' }}
-        </span>
-      </div>
+          <div class="info">
+            <a class="author" ng-href="#!/profile/{{ article.author.username }}">
+              {{ article.author.username }}
+            </a>
+            <span class="date">
+              {{ article.createdAt | date: 'longDate' }}
+            </span>
+          </div>
 
-      <ng-content></ng-content>
-    </div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe],
-})
-export class ArticleMetaComponent {
-  @Input() article!: Article;
-}
+          <ng-transclude></ng-transclude>
+        </div>
+      `,
+    };
+  },
+]);

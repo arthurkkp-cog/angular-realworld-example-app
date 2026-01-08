@@ -1,56 +1,72 @@
-@if (profile) {
-  <div class="profile-page">
-    <div class="user-info">
-      <div class="container">
-        <div class="row">
-          <div class="col-xs-12 col-md-10 offset-md-1">
-            <img [src]="profile.image" class="user-img" />
-            <h4>{{ profile.username }}</h4>
-            <p>{{ profile.bio }}</p>
-            @if (!isUser) {
-              <app-follow-button [profile]="profile" (toggle)="onToggleFollowing($event)" />
-            }
-            @if (isUser) {
-              <a [routerLink]="['/settings']" class="btn btn-sm btn-outline-secondary action-btn">
-                <i class="ion-gear-a"></i> Edit Profile Settings
-              </a>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
+<div class="profile-page" ng-if="profile">
+  <div class="user-info">
     <div class="container">
       <div class="row">
         <div class="col-xs-12 col-md-10 offset-md-1">
-          <div class="articles-toggle">
-            <ul class="nav nav-pills outline-active">
-              <li class="nav-item">
-                <a
-                  class="nav-link"
-                  routerLinkActive="active"
-                  [routerLinkActiveOptions]="{ exact: true }"
-                  [routerLink]="['/profile', profile.username]"
-                >
-                  My Posts
-                </a>
-              </li>
-              <li class="nav-item">
-                <a
-                  class="nav-link"
-                  routerLinkActive="active"
-                  [routerLinkActiveOptions]="{ exact: true }"
-                  [routerLink]="['/profile', profile.username, 'favorites']"
-                >
-                  Favorited Posts
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <router-outlet></router-outlet>
+          <img ng-src="{{ profile.image }}" class="user-img" />
+          <h4>{{ profile.username }}</h4>
+          <p>{{ profile.bio }}</p>
+          <button
+            ng-if="!isUser"
+            class="btn btn-sm action-btn"
+            ng-class="{ 'btn-secondary': profile.following, 'btn-outline-secondary': !profile.following }"
+            ng-click="profile.following ? unfollowUser() : followUser()"
+          >
+            <i class="ion-plus-round"></i>
+            {{ profile.following ? 'Unfollow' : 'Follow' }} {{ profile.username }}
+          </button>
+          <a ng-if="isUser" ng-href="#!/settings" class="btn btn-sm btn-outline-secondary action-btn">
+            <i class="ion-gear-a"></i> Edit Profile Settings
+          </a>
         </div>
       </div>
     </div>
   </div>
-}
+
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12 col-md-10 offset-md-1">
+        <div class="articles-toggle">
+          <ul class="nav nav-pills outline-active">
+            <li class="nav-item">
+              <a class="nav-link" ng-class="{ active: activeTab === 'articles' }" ng-click="setTab('articles')">
+                My Posts
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" ng-class="{ active: activeTab === 'favorites' }" ng-click="setTab('favorites')">
+                Favorited Posts
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Article List -->
+        <div class="article-preview" ng-if="!articlesLoaded">Loading articles...</div>
+
+        <div ng-if="articlesLoaded">
+          <div ng-if="articles.length === 0" class="article-preview">No articles are here... yet.</div>
+
+          <app-article-preview
+            ng-repeat="article in articles track by article.slug"
+            article="article"
+          ></app-article-preview>
+
+          <nav>
+            <ul class="pagination">
+              <li
+                ng-repeat="pageNumber in totalPages track by $index"
+                class="page-item"
+                ng-class="{ active: pageNumber === currentPage }"
+              >
+                <button class="page-link" ng-click="setPageTo(pageNumber)">
+                  {{ pageNumber }}
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

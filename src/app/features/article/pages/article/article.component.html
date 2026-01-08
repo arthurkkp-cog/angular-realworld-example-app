@@ -1,116 +1,109 @@
-@if (article) {
-  <div class="article-page">
-    <div class="banner">
-      <div class="container">
-        <h1>{{ article.title }}</h1>
+<div class="article-page" ng-if="article">
+  <div class="banner">
+    <div class="container">
+      <h1>{{ article.title }}</h1>
 
-        <app-article-meta [article]="article">
-          @if (canModify) {
-            <span>
-              <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/editor', article.slug]">
-                <i class="ion-edit"></i> Edit Article
-              </a>
+      <app-article-meta article="article">
+        <span ng-if="canModify">
+          <a class="btn btn-sm btn-outline-secondary" ng-href="#!/editor/{{ article.slug }}">
+            <i class="ion-edit"></i> Edit Article
+          </a>
 
-              <button
-                class="btn btn-sm btn-outline-danger"
-                [ngClass]="{ disabled: isDeleting }"
-                (click)="deleteArticle()"
-              >
-                <i class="ion-trash-a"></i> Delete Article
-              </button>
-            </span>
-          } @else {
-            <span>
-              <app-follow-button [profile]="article.author" (toggle)="toggleFollowing($event)"> </app-follow-button>
+          <button class="btn btn-sm btn-outline-danger" ng-class="{ disabled: isDeleting }" ng-click="deleteArticle()">
+            <i class="ion-trash-a"></i> Delete Article
+          </button>
+        </span>
+        <span ng-if="!canModify">
+          <app-follow-button profile="article.author" on-toggle="toggleFollowing(profile)"></app-follow-button>
 
-              <app-favorite-button [article]="article" (toggle)="onToggleFavorite($event)">
-                {{ article.favorited ? 'Unfavorite' : 'Favorite' }} Article
-                <span class="counter">({{ article.favoritesCount }})</span>
-              </app-favorite-button>
-            </span>
-          }
-        </app-article-meta>
+          <button
+            class="btn btn-sm"
+            ng-class="{ 'btn-primary': article.favorited, 'btn-outline-primary': !article.favorited }"
+            ng-click="article.favorited ? unfavoriteArticle() : favoriteArticle()"
+          >
+            <i class="ion-heart"></i>
+            {{ article.favorited ? 'Unfavorite' : 'Favorite' }} Article
+            <span class="counter">({{ article.favoritesCount }})</span>
+          </button>
+        </span>
+      </app-article-meta>
+    </div>
+  </div>
+
+  <div class="container page">
+    <div class="row article-content">
+      <div class="col-md-12">
+        <div ng-bind-html="articleBodyHtml"></div>
+
+        <ul class="tag-list">
+          <li ng-repeat="tag in article.tagList track by $index" class="tag-default tag-pill tag-outline">
+            {{ tag }}
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div class="container page">
-      <div class="row article-content">
-        <div class="col-md-12">
-          <div [innerHTML]="article.body | markdown | async"></div>
+    <hr />
 
-          <ul class="tag-list">
-            @for (tag of article.tagList; track tag) {
-              <li class="tag-default tag-pill tag-outline">
-                {{ tag }}
-              </li>
-            }
-          </ul>
+    <div class="article-actions">
+      <app-article-meta article="article">
+        <span ng-if="canModify">
+          <a class="btn btn-sm btn-outline-secondary" ng-href="#!/editor/{{ article.slug }}">
+            <i class="ion-edit"></i> Edit Article
+          </a>
+
+          <button class="btn btn-sm btn-outline-danger" ng-class="{ disabled: isDeleting }" ng-click="deleteArticle()">
+            <i class="ion-trash-a"></i> Delete Article
+          </button>
+        </span>
+        <span ng-if="!canModify">
+          <app-follow-button profile="article.author" on-toggle="toggleFollowing(profile)"></app-follow-button>
+
+          <button
+            class="btn btn-sm"
+            ng-class="{ 'btn-primary': article.favorited, 'btn-outline-primary': !article.favorited }"
+            ng-click="article.favorited ? unfavoriteArticle() : favoriteArticle()"
+          >
+            <i class="ion-heart"></i>
+            {{ article.favorited ? 'Unfavorite' : 'Favorite' }} Article
+            <span class="counter">({{ article.favoritesCount }})</span>
+          </button>
+        </span>
+      </app-article-meta>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-12 col-md-8 offset-md-2">
+        <div ng-if="isAuthenticated">
+          <app-list-errors errors="commentFormErrors"></app-list-errors>
+          <form class="card comment-form" ng-submit="addComment()">
+            <fieldset ng-disabled="isSubmitting">
+              <div class="card-block">
+                <textarea
+                  class="form-control"
+                  placeholder="Write a comment..."
+                  rows="3"
+                  ng-model="commentText"
+                ></textarea>
+              </div>
+              <div class="card-footer">
+                <img ng-src="{{ currentUser.image || '' }}" class="comment-author-img" />
+                <button class="btn btn-sm btn-primary" type="submit">Post Comment</button>
+              </div>
+            </fieldset>
+          </form>
         </div>
-      </div>
 
-      <hr />
-
-      <div class="article-actions">
-        <app-article-meta [article]="article">
-          @if (canModify) {
-            <span>
-              <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/editor', article.slug]">
-                <i class="ion-edit"></i> Edit Article
-              </a>
-
-              <button
-                class="btn btn-sm btn-outline-danger"
-                [ngClass]="{ disabled: isDeleting }"
-                (click)="deleteArticle()"
-              >
-                <i class="ion-trash-a"></i> Delete Article
-              </button>
-            </span>
-          } @else {
-            <span>
-              <app-follow-button [profile]="article.author" (toggle)="toggleFollowing($event)" />
-
-              <app-favorite-button [article]="article" (toggle)="onToggleFavorite($event)">
-                {{ article.favorited ? 'Unfavorite' : 'Favorite' }} Article
-                <span class="counter">({{ article.favoritesCount }})</span>
-              </app-favorite-button>
-            </span>
-          }
-        </app-article-meta>
-      </div>
-
-      <div class="row">
-        <div class="col-xs-12 col-md-8 offset-md-2">
-          <div *ifAuthenticated="true">
-            <app-list-errors [errors]="commentFormErrors" />
-            <form class="card comment-form" (ngSubmit)="addComment()">
-              <fieldset [disabled]="isSubmitting">
-                <div class="card-block">
-                  <textarea
-                    class="form-control"
-                    placeholder="Write a comment..."
-                    rows="3"
-                    [formControl]="commentControl"
-                  ></textarea>
-                </div>
-                <div class="card-footer">
-                  <img [src]="currentUser?.image === null ? '' : currentUser?.image" class="comment-author-img" />
-                  <button class="btn btn-sm btn-primary" type="submit">Post Comment</button>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-
-          <div *ifAuthenticated="false">
-            <a [routerLink]="['/login']">Sign in</a> or <a [routerLink]="['/register']">sign up</a> to add comments on
-            this article.
-          </div>
-
-          @for (comment of comments; track comment) {
-            <app-article-comment [comment]="comment" (delete)="deleteComment(comment)" />
-          }
+        <div ng-if="!isAuthenticated">
+          <a ng-href="#!/login">Sign in</a> or <a ng-href="#!/register">sign up</a> to add comments on this article.
         </div>
+
+        <app-article-comment
+          ng-repeat="comment in comments track by comment.id"
+          comment="comment"
+          on-delete="deleteComment(comment)"
+        ></app-article-comment>
       </div>
     </div>
   </div>
-}
+</div>

@@ -1,26 +1,44 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
-import { Comment } from '../models/comment.model';
+// AngularJS Comments Service
+// Handles comment CRUD operations for articles
 
-@Injectable({ providedIn: 'root' })
-export class CommentsService {
-  constructor(private readonly http: HttpClient) {}
-
-  getAll(slug: string): Observable<Comment[]> {
-    return this.http.get<{ comments: Comment[] }>(`/articles/${slug}/comments`).pipe(map(data => data.comments));
-  }
-
-  add(slug: string, payload: string): Observable<Comment> {
-    return this.http
-      .post<{ comment: Comment }>(`/articles/${slug}/comments`, {
-        comment: { body: payload },
-      })
-      .pipe(map(data => data.comment));
-  }
-
-  delete(commentId: string, slug: string): Observable<void> {
-    return this.http.delete<void>(`/articles/${slug}/comments/${commentId}`);
-  }
+interface Comment {
+  id: number;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    username: string;
+    bio: string;
+    image: string;
+    following: boolean;
+  };
 }
+
+angular.module('conduitApp').factory('CommentsService', [
+  '$http',
+  function ($http: angular.IHttpService) {
+    return {
+      getAll: function (slug: string): angular.IPromise<Comment[]> {
+        return $http.get<{ comments: Comment[] }>('/articles/' + slug + '/comments').then(function (response) {
+          return response.data.comments;
+        });
+      },
+
+      add: function (slug: string, payload: string): angular.IPromise<Comment> {
+        return $http
+          .post<{ comment: Comment }>('/articles/' + slug + '/comments', {
+            comment: { body: payload },
+          })
+          .then(function (response) {
+            return response.data.comment;
+          });
+      },
+
+      delete: function (commentId: number, slug: string): angular.IPromise<void> {
+        return $http.delete<void>('/articles/' + slug + '/comments/' + commentId).then(function () {
+          return;
+        });
+      },
+    };
+  },
+]);

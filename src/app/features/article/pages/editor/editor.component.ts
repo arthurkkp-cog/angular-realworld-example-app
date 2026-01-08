@@ -1,95 +1,119 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest } from 'rxjs';
-import { Errors } from '../../../../core/models/errors.model';
-import { ArticlesService } from '../../services/articles.service';
-import { UserService } from '../../../../core/auth/services/user.service';
-import { ListErrorsComponent } from '../../../../shared/components/list-errors.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// AngularJS Editor Controller
+// Handles article creation and editing
 
-interface ArticleForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-  body: FormControl<string>;
+interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  body: string;
+  tagList: string[];
+  author: { username: string };
 }
 
-@Component({
-  selector: 'app-editor-page',
-  templateUrl: './editor.component.html',
-  imports: [ListErrorsComponent, ReactiveFormsModule],
-})
-export default class EditorComponent implements OnInit {
-  tagList: string[] = [];
-  articleForm: UntypedFormGroup = new FormGroup<ArticleForm>({
-    title: new FormControl('', { nonNullable: true }),
-    description: new FormControl('', { nonNullable: true }),
-    body: new FormControl('', { nonNullable: true }),
-  });
-  tagField = new FormControl<string>('', { nonNullable: true });
+interface Errors {
+  errors: { [key: string]: string };
+}
 
-  errors: Errors | null = null;
-  isSubmitting = false;
-  destroyRef = inject(DestroyRef);
+angular.module('conduitApp').controller('EditorController', [
+  '$scope',
+  '$location',
+  '$routeParams',
+  '$q',
+  'ArticlesService',
+  'UserService',
+  function (
+    $scope: angular.IScope & {
+      formData: { title: string; description: string; body: string };
+      tagList: string[];
+      tagField: string;
+      errors: Errors | null;
+      isSubmitting: boolean;
+      addTag: () => void;
+      removeTag: (tag: string) => void;
+      submitForm: () => void;
+    },
+    $location: angular.ILocationService,
+    $routeParams: angular.route.IRouteParamsService,
+    $q: angular.IQService,
+    ArticlesService: any,
+    UserService: any,
+  ) {
+    // Initialize form data
+    $scope.formData = {
+      title: '',
+      description: '',
+      body: '',
+    };
+    $scope.tagList = [];
+    $scope.tagField = '';
+    $scope.errors = null;
+    $scope.isSubmitting = false;
 
-  constructor(
-    private readonly articleService: ArticlesService,
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly userService: UserService,
-  ) {}
-
-  ngOnInit() {
-    if (this.route.snapshot.params['slug']) {
-      combineLatest([this.articleService.get(this.route.snapshot.params['slug']), this.userService.getCurrentUser()])
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(([article, { user }]) => {
+    // Load existing article if editing
+    const slug = $routeParams['slug'];
+    if (slug) {
+      $q.all([ArticlesService.get(slug), UserService.getCurrentUser()]).then(
+        function (results: [Article, { user: { username: string } }]) {
+          const article = results[0];
+          const user = results[1].user;
           if (user.username === article.author.username) {
-            this.tagList = article.tagList;
-            this.articleForm.patchValue(article);
+            $scope.formData = {
+              title: article.title,
+              description: article.description,
+              body: article.body,
+            };
+            $scope.tagList = article.tagList || [];
           } else {
-            void this.router.navigate(['/']);
+            $location.path('/');
           }
-        });
+        },
+        function () {
+          $location.path('/');
+        },
+      );
     }
-  }
 
-  addTag() {
-    // retrieve tag control
-    const tag = this.tagField.value;
-    // only add tag if it does not exist yet
-    if (tag != null && tag.trim() !== '' && this.tagList.indexOf(tag) < 0) {
-      this.tagList.push(tag);
-    }
-    // clear the input
-    this.tagField.reset('');
-  }
-
-  removeTag(tagName: string): void {
-    this.tagList = this.tagList.filter(tag => tag !== tagName);
-  }
-
-  submitForm(): void {
-    this.isSubmitting = true;
-    // update any single tag
-    this.addTag();
-
-    const slug = this.route.snapshot.params['slug'];
-    const articleData = {
-      ...this.articleForm.value,
-      tagList: this.tagList,
+    // Add tag handler
+    $scope.addTag = function (): void {
+      const tag = $scope.tagField.trim();
+      if (tag && $scope.tagList.indexOf(tag) < 0) {
+        $scope.tagList.push(tag);
+      }
+      $scope.tagField = '';
     };
 
-    const observable = slug
-      ? this.articleService.update({ ...articleData, slug })
-      : this.articleService.create(articleData);
+    // Remove tag handler
+    $scope.removeTag = function (tagName: string): void {
+      $scope.tagList = $scope.tagList.filter(function (tag) {
+        return tag !== tagName;
+      });
+    };
 
-    observable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: article => this.router.navigate(['/article/', article.slug]),
-      error: err => {
-        this.errors = err;
-        this.isSubmitting = false;
-      },
-    });
-  }
-}
+    // Submit form handler
+    $scope.submitForm = function (): void {
+      $scope.isSubmitting = true;
+      $scope.addTag();
+
+      const articleData = {
+        title: $scope.formData.title,
+        description: $scope.formData.description,
+        body: $scope.formData.body,
+        tagList: $scope.tagList,
+      };
+
+      const promise = slug
+        ? ArticlesService.update({ ...articleData, slug: slug })
+        : ArticlesService.create(articleData);
+
+      promise.then(
+        function (article: Article) {
+          $location.path('/article/' + article.slug);
+        },
+        function (err: Errors) {
+          $scope.errors = err;
+          $scope.isSubmitting = false;
+        },
+      );
+    };
+  },
+]);

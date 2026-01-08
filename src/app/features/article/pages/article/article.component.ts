@@ -1,134 +1,198 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { User } from '../../../../core/auth/user.model';
-import { Article } from '../../models/article.model';
-import { ArticlesService } from '../../services/articles.service';
-import { CommentsService } from '../../services/comments.service';
-import { UserService } from '../../../../core/auth/services/user.service';
-import { ArticleMetaComponent } from '../../components/article-meta.component';
-import { AsyncPipe, NgClass } from '@angular/common';
-import { MarkdownPipe } from '../../../../shared/pipes/markdown.pipe';
-import { ListErrorsComponent } from '../../../../shared/components/list-errors.component';
-import { ArticleCommentComponent } from '../../components/article-comment.component';
-import { catchError } from 'rxjs/operators';
-import { combineLatest, throwError } from 'rxjs';
-import { Comment } from '../../models/comment.model';
-import { IfAuthenticatedDirective } from '../../../../core/auth/if-authenticated.directive';
-import { Errors } from '../../../../core/models/errors.model';
-import { Profile } from '../../../profile/models/profile.model';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FavoriteButtonComponent } from '../../components/favorite-button.component';
-import { FollowButtonComponent } from '../../../profile/components/follow-button.component';
+// AngularJS Article Controller
+// Handles article display, comments, and interactions
 
-@Component({
-  selector: 'app-article-page',
-  templateUrl: './article.component.html',
-  imports: [
-    ArticleMetaComponent,
-    RouterLink,
-    NgClass,
-    FollowButtonComponent,
-    FavoriteButtonComponent,
-    MarkdownPipe,
-    AsyncPipe,
-    ListErrorsComponent,
-    FormsModule,
-    ArticleCommentComponent,
-    ReactiveFormsModule,
-    IfAuthenticatedDirective,
-  ],
-})
-export default class ArticleComponent implements OnInit {
-  article!: Article;
-  currentUser!: User | null;
-  comments: Comment[] = [];
-  canModify: boolean = false;
-
-  commentControl = new FormControl<string>('', { nonNullable: true });
-  commentFormErrors: Errors | null = null;
-
-  isSubmitting = false;
-  isDeleting = false;
-  destroyRef = inject(DestroyRef);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly articleService: ArticlesService,
-    private readonly commentsService: CommentsService,
-    private readonly router: Router,
-    private readonly userService: UserService,
-  ) {}
-
-  ngOnInit(): void {
-    const slug = this.route.snapshot.params['slug'];
-    combineLatest([this.articleService.get(slug), this.commentsService.getAll(slug), this.userService.currentUser])
-      .pipe(
-        catchError(err => {
-          void this.router.navigate(['/']);
-          return throwError(() => err);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(([article, comments, currentUser]) => {
-        this.article = article;
-        this.comments = comments;
-        this.currentUser = currentUser;
-        this.canModify = currentUser?.username === article.author.username;
-      });
-  }
-
-  onToggleFavorite(favorited: boolean): void {
-    this.article.favorited = favorited;
-
-    if (favorited) {
-      this.article.favoritesCount++;
-    } else {
-      this.article.favoritesCount--;
-    }
-  }
-
-  toggleFollowing(profile: Profile): void {
-    this.article.author.following = profile.following;
-  }
-
-  deleteArticle(): void {
-    this.isDeleting = true;
-
-    this.articleService
-      .delete(this.article.slug)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        void this.router.navigate(['/']);
-      });
-  }
-
-  addComment() {
-    this.isSubmitting = true;
-    this.commentFormErrors = null;
-
-    this.commentsService
-      .add(this.article.slug, this.commentControl.value)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: comment => {
-          this.comments.unshift(comment);
-          this.commentControl.reset('');
-          this.isSubmitting = false;
-        },
-        error: errors => {
-          this.isSubmitting = false;
-          this.commentFormErrors = errors;
-        },
-      });
-  }
-
-  deleteComment(comment: Comment): void {
-    this.commentsService
-      .delete(comment.id, this.article.slug)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.comments = this.comments.filter(item => item !== comment);
-      });
-  }
+interface Profile {
+  username: string;
+  bio: string;
+  image: string;
+  following: boolean;
 }
+
+interface Article {
+  slug: string;
+  title: string;
+  description: string;
+  body: string;
+  tagList: string[];
+  createdAt: string;
+  updatedAt: string;
+  favorited: boolean;
+  favoritesCount: number;
+  author: Profile;
+}
+
+interface Comment {
+  id: number;
+  body: string;
+  createdAt: string;
+  author: Profile;
+}
+
+interface User {
+  email: string;
+  token: string;
+  username: string;
+  bio: string;
+  image: string;
+}
+
+interface Errors {
+  errors: { [key: string]: string };
+}
+
+angular.module('conduitApp').controller('ArticleController', [
+  '$scope',
+  '$location',
+  '$routeParams',
+  '$q',
+  '$sce',
+  'ArticlesService',
+  'CommentsService',
+  'UserService',
+  function (
+    $scope: angular.IScope & {
+      article: Article | null;
+      currentUser: User | null;
+      comments: Comment[];
+      canModify: boolean;
+      commentText: string;
+      commentFormErrors: Errors | null;
+      isSubmitting: boolean;
+      isDeleting: boolean;
+      isAuthenticated: boolean;
+      articleBodyHtml: string;
+      onToggleFavorite: (favorited: boolean) => void;
+      toggleFollowing: (profile: Profile) => void;
+      deleteArticle: () => void;
+      addComment: () => void;
+      deleteComment: (comment: Comment) => void;
+      favoriteArticle: () => void;
+      unfavoriteArticle: () => void;
+      followAuthor: () => void;
+      unfollowAuthor: () => void;
+    },
+    $location: angular.ILocationService,
+    $routeParams: angular.route.IRouteParamsService,
+    $q: angular.IQService,
+    $sce: angular.ISCEService,
+    ArticlesService: any,
+    CommentsService: any,
+    UserService: any,
+  ) {
+    // Initialize controller properties
+    $scope.article = null;
+    $scope.currentUser = null;
+    $scope.comments = [];
+    $scope.canModify = false;
+    $scope.commentText = '';
+    $scope.commentFormErrors = null;
+    $scope.isSubmitting = false;
+    $scope.isDeleting = false;
+    $scope.isAuthenticated = UserService.isAuthenticated();
+    $scope.articleBodyHtml = '';
+
+    // Load article and comments
+    const slug = $routeParams['slug'];
+    $q.all([ArticlesService.get(slug), CommentsService.getAll(slug)]).then(
+      function (results: [Article, Comment[]]) {
+        $scope.article = results[0];
+        $scope.comments = results[1];
+        $scope.currentUser = UserService.getCurrentUserValue();
+        $scope.canModify = $scope.currentUser?.username === $scope.article.author.username;
+
+        // Parse markdown body
+        if (typeof marked !== 'undefined' && $scope.article.body) {
+          $scope.articleBodyHtml = $sce.trustAsHtml(marked.parse($scope.article.body));
+        }
+      },
+      function () {
+        $location.path('/');
+      },
+    );
+
+    // Toggle favorite handler
+    $scope.onToggleFavorite = function (favorited: boolean): void {
+      if ($scope.article) {
+        $scope.article.favorited = favorited;
+        if (favorited) {
+          $scope.article.favoritesCount++;
+        } else {
+          $scope.article.favoritesCount--;
+        }
+      }
+    };
+
+    // Favorite article
+    $scope.favoriteArticle = function (): void {
+      if (!$scope.isAuthenticated) {
+        $location.path('/login');
+        return;
+      }
+      if ($scope.article) {
+        ArticlesService.favorite($scope.article.slug).then(function (article: Article) {
+          $scope.article = article;
+        });
+      }
+    };
+
+    // Unfavorite article
+    $scope.unfavoriteArticle = function (): void {
+      if ($scope.article) {
+        ArticlesService.unfavorite($scope.article.slug).then(function () {
+          if ($scope.article) {
+            $scope.article.favorited = false;
+            $scope.article.favoritesCount--;
+          }
+        });
+      }
+    };
+
+    // Toggle following handler
+    $scope.toggleFollowing = function (profile: Profile): void {
+      if ($scope.article) {
+        $scope.article.author.following = profile.following;
+      }
+    };
+
+    // Delete article handler
+    $scope.deleteArticle = function (): void {
+      $scope.isDeleting = true;
+      if ($scope.article) {
+        ArticlesService.delete($scope.article.slug).then(function () {
+          $location.path('/');
+        });
+      }
+    };
+
+    // Add comment handler
+    $scope.addComment = function (): void {
+      $scope.isSubmitting = true;
+      $scope.commentFormErrors = null;
+
+      if ($scope.article) {
+        CommentsService.add($scope.article.slug, $scope.commentText).then(
+          function (comment: Comment) {
+            $scope.comments.unshift(comment);
+            $scope.commentText = '';
+            $scope.isSubmitting = false;
+          },
+          function (errors: Errors) {
+            $scope.isSubmitting = false;
+            $scope.commentFormErrors = errors;
+          },
+        );
+      }
+    };
+
+    // Delete comment handler
+    $scope.deleteComment = function (comment: Comment): void {
+      if ($scope.article) {
+        CommentsService.delete(comment.id, $scope.article.slug).then(function () {
+          $scope.comments = $scope.comments.filter(function (item) {
+            return item !== comment;
+          });
+        });
+      }
+    };
+  },
+]);

@@ -1,66 +1,64 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { User } from '../../core/auth/user.model';
-import { UserService } from '../../core/auth/services/user.service';
-import { ListErrorsComponent } from '../../shared/components/list-errors.component';
-import { Errors } from '../../core/models/errors.model';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// AngularJS Settings Controller
+// Handles user settings form
 
-interface SettingsForm {
-  image: FormControl<string>;
-  username: FormControl<string>;
-  bio: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
+interface User {
+  email: string;
+  token: string;
+  username: string;
+  bio: string;
+  image: string;
 }
 
-@Component({
-  selector: 'app-settings-page',
-  templateUrl: './settings.component.html',
-  imports: [ListErrorsComponent, ReactiveFormsModule],
-})
-export default class SettingsComponent implements OnInit {
-  user!: User;
-  settingsForm = new FormGroup<SettingsForm>({
-    image: new FormControl('', { nonNullable: true }),
-    username: new FormControl('', { nonNullable: true }),
-    bio: new FormControl('', { nonNullable: true }),
-    email: new FormControl('', { nonNullable: true }),
-    password: new FormControl('', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-  });
-  errors: Errors | null = null;
-  isSubmitting = false;
-  destroyRef = inject(DestroyRef);
+interface Errors {
+  errors: { [key: string]: string };
+}
 
-  constructor(
-    private readonly router: Router,
-    private readonly userService: UserService,
-  ) {}
+angular.module('conduitApp').controller('SettingsController', [
+  '$scope',
+  '$location',
+  'UserService',
+  function (
+    $scope: angular.IScope & {
+      formData: Partial<User>;
+      errors: Errors | null;
+      isSubmitting: boolean;
+      submitForm: () => void;
+      logout: () => void;
+    },
+    $location: angular.ILocationService,
+    UserService: any,
+  ) {
+    // Initialize form data with current user
+    const currentUser = UserService.getCurrentUserValue();
+    $scope.formData = {
+      image: currentUser?.image || '',
+      username: currentUser?.username || '',
+      bio: currentUser?.bio || '',
+      email: currentUser?.email || '',
+      password: '',
+    };
+    $scope.errors = null;
+    $scope.isSubmitting = false;
 
-  ngOnInit(): void {
-    this.settingsForm.patchValue(this.userService.getCurrentUser() as Partial<User>);
-  }
+    // Submit form handler
+    $scope.submitForm = function (): void {
+      $scope.isSubmitting = true;
+      $scope.errors = null;
 
-  logout(): void {
-    this.userService.logout();
-  }
-
-  submitForm() {
-    this.isSubmitting = true;
-
-    this.userService
-      .update(this.settingsForm.value)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ({ user }) => void this.router.navigate(['/profile/', user.username]),
-        error: err => {
-          this.errors = err;
-          this.isSubmitting = false;
+      UserService.update($scope.formData).then(
+        function (response: { user: User }) {
+          $location.path('/profile/' + response.user.username);
         },
-      });
-  }
-}
+        function (err: Errors) {
+          $scope.errors = err;
+          $scope.isSubmitting = false;
+        },
+      );
+    };
+
+    // Logout handler
+    $scope.logout = function (): void {
+      UserService.logout();
+    };
+  },
+]);

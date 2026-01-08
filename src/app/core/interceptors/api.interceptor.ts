@@ -1,6 +1,18 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+// AngularJS API Interceptor
+// Prepends the base API URL to all outgoing requests
 
-export const apiInterceptor: HttpInterceptorFn = (req, next) => {
-  const apiReq = req.clone({ url: `https://api.realworld.show/api${req.url}` });
-  return next(apiReq);
-};
+angular.module('conduitApp').factory('apiInterceptor', [
+  function () {
+    const API_URL = 'https://api.realworld.show/api';
+
+    return {
+      request: function (config: angular.IRequestConfig): angular.IRequestConfig {
+        // Prepend API URL to all requests
+        if (config.url && !config.url.startsWith('http')) {
+          config.url = API_URL + config.url;
+        }
+        return config;
+      },
+    };
+  },
+]);

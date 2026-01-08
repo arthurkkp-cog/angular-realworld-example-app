@@ -1,38 +1,17 @@
-import { DestroyRef, Directive, inject, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
-import { UserService } from './services/user.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// AngularJS If Authenticated Directive
+// Conditionally shows/hides content based on authentication status
+// Note: In AngularJS, we use ng-if with isAuthenticated scope variable instead
+// This file is kept for reference but the functionality is handled by ng-if in templates
 
-@Directive({
-  selector: '[ifAuthenticated]',
-  standalone: true,
-})
-export class IfAuthenticatedDirective<T> implements OnInit {
-  destroyRef = inject(DestroyRef);
-  constructor(
-    private templateRef: TemplateRef<T>,
-    private userService: UserService,
-    private viewContainer: ViewContainerRef,
-  ) {}
+// Usage in templates:
+// ng-if="isAuthenticated" - show when logged in
+// ng-if="!isAuthenticated" - show when logged out
 
-  condition: boolean = false;
-  hasView = false;
+// The isAuthenticated variable is set in controllers that need it:
+// $scope.isAuthenticated = UserService.isAuthenticated();
+// $scope.$on('userUpdated', function(event, user) {
+//   $scope.isAuthenticated = !!user;
+// });
 
-  ngOnInit() {
-    this.userService.isAuthenticated.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isAuthenticated: boolean) => {
-      const authRequired = isAuthenticated && this.condition;
-      const unauthRequired = !isAuthenticated && !this.condition;
-
-      if ((authRequired || unauthRequired) && !this.hasView) {
-        this.viewContainer.createEmbeddedView(this.templateRef);
-        this.hasView = true;
-      } else if (this.hasView) {
-        this.viewContainer.clear();
-        this.hasView = false;
-      }
-    });
-  }
-
-  @Input() set ifAuthenticated(condition: boolean) {
-    this.condition = condition;
-  }
-}
+// This directive is not needed in AngularJS as we use ng-if directly
+// with the isAuthenticated scope variable

@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
+// AngularJS Tags Service
+// Handles fetching popular tags
 
-@Injectable({ providedIn: 'root' })
-export class TagsService {
-  constructor(private readonly http: HttpClient) {}
-
-  getAll(): Observable<string[]> {
-    return this.http.get<{ tags: string[] }>('/tags').pipe(map(data => data.tags));
-  }
-}
+angular.module('conduitApp').factory('TagsService', [
+  '$http',
+  function ($http: angular.IHttpService) {
+    return {
+      getAll: function (): angular.IPromise<string[]> {
+        return $http.get<{ tags: string[] }>('/tags').then(function (response) {
+          return response.data.tags;
+        });
+      },
+    };
+  },
+]);

@@ -4,12 +4,12 @@
       <div class="col-md-6 offset-md-3 col-xs-12">
         <h1 class="text-xs-center">Your Settings</h1>
 
-        <app-list-errors [errors]="errors" />
+        <app-list-errors errors="errors"></app-list-errors>
 
-        <form [formGroup]="settingsForm" (ngSubmit)="submitForm()">
-          <fieldset [disabled]="isSubmitting">
+        <form name="settingsForm" ng-submit="submitForm()">
+          <fieldset ng-disabled="isSubmitting">
             <fieldset class="form-group">
-              <input class="form-control" type="text" placeholder="URL of profile picture" formControlName="image" />
+              <input class="form-control" type="text" placeholder="URL of profile picture" ng-model="formData.image" />
             </fieldset>
 
             <fieldset class="form-group">
@@ -17,7 +17,7 @@
                 class="form-control form-control-lg"
                 type="text"
                 placeholder="Username"
-                formControlName="username"
+                ng-model="formData.username"
               />
             </fieldset>
 
@@ -26,13 +26,12 @@
                 class="form-control form-control-lg"
                 rows="8"
                 placeholder="Short bio about you"
-                formControlName="bio"
-              >
-              </textarea>
+                ng-model="formData.bio"
+              ></textarea>
             </fieldset>
 
             <fieldset class="form-group">
-              <input class="form-control form-control-lg" type="email" placeholder="Email" formControlName="email" />
+              <input class="form-control form-control-lg" type="email" placeholder="Email" ng-model="formData.email" />
             </fieldset>
 
             <fieldset class="form-group">
@@ -40,7 +39,8 @@
                 class="form-control form-control-lg"
                 type="password"
                 placeholder="New Password"
-                formControlName="password"
+                ng-model="formData.password"
+                required
               />
             </fieldset>
 
@@ -51,7 +51,7 @@
         <!-- Line break for logout button -->
         <hr />
 
-        <button class="btn btn-outline-danger" (click)="logout()">Or click here to logout.</button>
+        <button class="btn btn-outline-danger" ng-click="logout()">Or click here to logout.</button>
       </div>
     </div>
   </div>
