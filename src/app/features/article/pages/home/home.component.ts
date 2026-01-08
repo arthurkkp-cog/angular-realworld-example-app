@@ -1,61 +1,114 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { TagsService } from '../../services/tags.service';
-import { ArticleListConfig } from '../../models/article-list-config.model';
-import { NgClass } from '@angular/common';
-import { ArticleListComponent } from '../../components/article-list.component';
-import { tap } from 'rxjs/operators';
-import { UserService } from '../../../../core/auth/services/user.service';
-import { RxLet } from '@rx-angular/template/let';
-import { IfAuthenticatedDirective } from '../../../../core/auth/if-authenticated.directive';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// AngularJS Home Controller
+// Handles the home page with article feeds and tags
 
-@Component({
-  selector: 'app-home-page',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css'],
-  imports: [NgClass, ArticleListComponent, RxLet, IfAuthenticatedDirective],
-})
-export default class HomeComponent implements OnInit {
-  isAuthenticated = false;
-  listConfig: ArticleListConfig = {
-    type: 'all',
-    filters: {},
+interface ArticleListConfig {
+  type: string;
+  filters: {
+    tag?: string;
+    author?: string;
+    favorited?: string;
+    limit?: number;
+    offset?: number;
   };
-  tags$ = inject(TagsService)
-    .getAll()
-    .pipe(tap(() => (this.tagsLoaded = true)));
-  tagsLoaded = false;
-  destroyRef = inject(DestroyRef);
+}
 
-  constructor(
-    private readonly router: Router,
-    private readonly userService: UserService,
-  ) {}
+angular.module('conduitApp').controller('HomeController', [
+  '$scope',
+  '$location',
+  'UserService',
+  'TagsService',
+  'ArticlesService',
+  function (
+    $scope: angular.IScope & {
+      isAuthenticated: boolean;
+      listConfig: ArticleListConfig;
+      tags: string[];
+      tagsLoaded: boolean;
+      articles: any[];
+      articlesLoaded: boolean;
+      totalPages: number[];
+      currentPage: number;
+      setListTo: (type: string, filters?: any) => void;
+      setPageTo: (page: number) => void;
+    },
+    $location: angular.ILocationService,
+    UserService: any,
+    TagsService: any,
+    ArticlesService: any,
+  ) {
+    // Initialize controller properties
+    $scope.isAuthenticated = UserService.isAuthenticated();
+    $scope.listConfig = {
+      type: $scope.isAuthenticated ? 'feed' : 'all',
+      filters: {},
+    };
+    $scope.tags = [];
+    $scope.tagsLoaded = false;
+    $scope.articles = [];
+    $scope.articlesLoaded = false;
+    $scope.totalPages = [];
+    $scope.currentPage = 1;
 
-  ngOnInit(): void {
-    this.userService.isAuthenticated
-      .pipe(
-        tap(isAuthenticated => {
-          if (isAuthenticated) {
-            this.setListTo('feed');
-          } else {
-            this.setListTo('all');
-          }
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((isAuthenticated: boolean) => (this.isAuthenticated = isAuthenticated));
-  }
+    const limit = 10;
 
-  setListTo(type: string = '', filters: Object = {}): void {
-    // If feed is requested but user is not authenticated, redirect to login
-    if (type === 'feed' && !this.isAuthenticated) {
-      void this.router.navigate(['/login']);
-      return;
+    // Load tags
+    TagsService.getAll().then(function (tags: string[]) {
+      $scope.tags = tags;
+      $scope.tagsLoaded = true;
+    });
+
+    // Load articles based on current config
+    function loadArticles(): void {
+      $scope.articlesLoaded = false;
+      $scope.articles = [];
+
+      const config = {
+        ...$scope.listConfig,
+        filters: {
+          ...$scope.listConfig.filters,
+          limit: limit,
+          offset: limit * ($scope.currentPage - 1),
+        },
+      };
+
+      ArticlesService.query(config).then(function (data: { articles: any[]; articlesCount: number }) {
+        $scope.articles = data.articles;
+        $scope.articlesLoaded = true;
+        $scope.totalPages = Array.from(
+          new Array(Math.ceil(data.articlesCount / limit)),
+          function (val: any, index: number) {
+            return index + 1;
+          },
+        );
+      });
     }
 
-    // Otherwise, set the list object
-    this.listConfig = { type: type, filters: filters };
-  }
-}
+    // Initial load
+    loadArticles();
+
+    // Set list type handler
+    $scope.setListTo = function (type: string, filters: any = {}): void {
+      // If feed is requested but user is not authenticated, redirect to login
+      if (type === 'feed' && !$scope.isAuthenticated) {
+        $location.path('/login');
+        return;
+      }
+
+      // Otherwise, set the list object and reload
+      $scope.listConfig = { type: type, filters: filters };
+      $scope.currentPage = 1;
+      loadArticles();
+    };
+
+    // Set page handler
+    $scope.setPageTo = function (page: number): void {
+      $scope.currentPage = page;
+      loadArticles();
+    };
+
+    // Listen for user updates
+    $scope.$on('userUpdated', function (event: angular.IAngularEvent, user: any) {
+      $scope.isAuthenticated = !!user;
+    });
+  },
+]);

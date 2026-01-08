@@ -1,82 +1,66 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
-import { Validators, FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ListErrorsComponent } from '../../shared/components/list-errors.component';
-import { Errors } from '../models/errors.model';
-import { UserService } from './services/user.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+// AngularJS Auth Controller
+// Handles login and registration forms
 
-interface AuthForm {
-  email: FormControl<string>;
-  password: FormControl<string>;
-  username?: FormControl<string>;
+interface Errors {
+  errors: { [key: string]: string };
 }
 
-@Component({
-  selector: 'app-auth-page',
-  templateUrl: './auth.component.html',
-  imports: [RouterLink, ListErrorsComponent, ReactiveFormsModule],
-})
-export default class AuthComponent implements OnInit {
-  authType = '';
-  title = '';
-  errors: Errors = { errors: {} };
-  isSubmitting = false;
-  authForm: FormGroup<AuthForm>;
-  destroyRef = inject(DestroyRef);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly userService: UserService,
+angular.module('conduitApp').controller('AuthController', [
+  '$scope',
+  '$location',
+  '$route',
+  'UserService',
+  'authType',
+  function (
+    $scope: angular.IScope & {
+      authType: string;
+      title: string;
+      errors: Errors;
+      isSubmitting: boolean;
+      formData: { email: string; password: string; username?: string };
+      submitForm: () => void;
+    },
+    $location: angular.ILocationService,
+    $route: angular.route.IRouteService,
+    UserService: any,
+    authType: string,
   ) {
-    this.authForm = new FormGroup<AuthForm>({
-      email: new FormControl('', {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
-      password: new FormControl('', {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
-    });
-  }
+    // Initialize controller properties
+    $scope.authType = authType || 'login';
+    $scope.title = $scope.authType === 'login' ? 'Sign in' : 'Sign up';
+    $scope.errors = { errors: {} };
+    $scope.isSubmitting = false;
+    $scope.formData = {
+      email: '',
+      password: '',
+      username: '',
+    };
 
-  ngOnInit(): void {
-    this.authType = this.route.snapshot.url.at(-1)!.path;
-    this.title = this.authType === 'login' ? 'Sign in' : 'Sign up';
-    if (this.authType === 'register') {
-      this.authForm.addControl(
-        'username',
-        new FormControl('', {
-          validators: [Validators.required],
-          nonNullable: true,
-        }),
+    // Submit form handler
+    $scope.submitForm = function (): void {
+      $scope.isSubmitting = true;
+      $scope.errors = { errors: {} };
+
+      const credentials =
+        $scope.authType === 'login'
+          ? { email: $scope.formData.email, password: $scope.formData.password }
+          : {
+              email: $scope.formData.email,
+              password: $scope.formData.password,
+              username: $scope.formData.username,
+            };
+
+      const promise = $scope.authType === 'login' ? UserService.login(credentials) : UserService.register(credentials);
+
+      promise.then(
+        function () {
+          $location.path('/');
+        },
+        function (err: Errors) {
+          $scope.errors = err;
+          $scope.isSubmitting = false;
+        },
       );
-    }
-  }
-
-  submitForm(): void {
-    this.isSubmitting = true;
-    this.errors = { errors: {} };
-
-    let observable =
-      this.authType === 'login'
-        ? this.userService.login(this.authForm.value as { email: string; password: string })
-        : this.userService.register(
-            this.authForm.value as {
-              email: string;
-              password: string;
-              username: string;
-            },
-          );
-
-    observable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => void this.router.navigate(['/']),
-      error: err => {
-        this.errors = err;
-        this.isSubmitting = false;
-      },
-    });
-  }
-}
+    };
+  },
+]);

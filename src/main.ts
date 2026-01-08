@@ -1,5 +1,10 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component';
-import { appConfig } from './app/app.config';
+// AngularJS Application Bootstrap
+// This file initializes the AngularJS application module
 
-bootstrapApplication(AppComponent, appConfig).catch(err => console.error(err));
+// Define the main application module with dependencies
+angular.module('conduitApp', ['ngRoute', 'ngSanitize']);
+
+// Manual bootstrap (alternative to ng-app directive)
+// angular.element(document).ready(function() {
+//   angular.bootstrap(document, ['conduitApp']);
+// });

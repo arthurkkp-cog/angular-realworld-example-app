@@ -1,46 +1,71 @@
-import { Component, Input } from '@angular/core';
-import { Article } from '../models/article.model';
-import { ArticleMetaComponent } from './article-meta.component';
-import { RouterLink } from '@angular/router';
+// AngularJS Article Preview Directive
+// Displays article preview with meta info and favorite button
 
-import { FavoriteButtonComponent } from './favorite-button.component';
+angular.module('conduitApp').directive('appArticlePreview', [
+  function () {
+    return {
+      restrict: 'E',
+      scope: {
+        article: '=',
+      },
+      template: `
+        <div class="article-preview">
+          <app-article-meta article="article">
+            <button
+              class="btn btn-sm pull-xs-right"
+              ng-class="{ 'btn-primary': article.favorited, 'btn-outline-primary': !article.favorited }"
+              ng-click="toggleFavorite()"
+            >
+              <i class="ion-heart"></i> {{ article.favoritesCount }}
+            </button>
+          </app-article-meta>
 
-@Component({
-  selector: 'app-article-preview',
-  template: `
-    <div class="article-preview">
-      <app-article-meta [article]="article">
-        <app-favorite-button [article]="article" (toggle)="toggleFavorite($event)" class="pull-xs-right">
-          {{ article.favoritesCount }}
-        </app-favorite-button>
-      </app-article-meta>
+          <a ng-href="#!/article/{{ article.slug }}" class="preview-link">
+            <h1>{{ article.title }}</h1>
+            <p>{{ article.description }}</p>
+            <span>Read more...</span>
+            <ul class="tag-list">
+              <li ng-repeat="tag in article.tagList track by $index" class="tag-default tag-pill tag-outline">
+                {{ tag }}
+              </li>
+            </ul>
+          </a>
+        </div>
+      `,
+      controller: [
+        '$scope',
+        '$location',
+        'ArticlesService',
+        'UserService',
+        function (
+          $scope: angular.IScope & {
+            article: any;
+            toggleFavorite: () => void;
+          },
+          $location: angular.ILocationService,
+          ArticlesService: any,
+          UserService: any,
+        ) {
+          $scope.toggleFavorite = function (): void {
+            if (!UserService.isAuthenticated()) {
+              $location.path('/login');
+              return;
+            }
 
-      <a [routerLink]="['/article', article.slug]" class="preview-link">
-        <h1>{{ article.title }}</h1>
-        <p>{{ article.description }}</p>
-        <span>Read more...</span>
-        <ul class="tag-list">
-          @for (tag of article.tagList; track tag) {
-            <li class="tag-default tag-pill tag-outline">
-              {{ tag }}
-            </li>
-          }
-        </ul>
-      </a>
-    </div>
-  `,
-  imports: [ArticleMetaComponent, FavoriteButtonComponent, RouterLink],
-})
-export class ArticlePreviewComponent {
-  @Input() article!: Article;
-
-  toggleFavorite(favorited: boolean): void {
-    this.article.favorited = favorited;
-
-    if (favorited) {
-      this.article.favoritesCount++;
-    } else {
-      this.article.favoritesCount--;
-    }
-  }
-}
+            if ($scope.article.favorited) {
+              ArticlesService.unfavorite($scope.article.slug).then(function (article: any) {
+                $scope.article.favorited = false;
+                $scope.article.favoritesCount--;
+              });
+            } else {
+              ArticlesService.favorite($scope.article.slug).then(function (article: any) {
+                $scope.article.favorited = true;
+                $scope.article.favoritesCount++;
+              });
+            }
+          };
+        },
+      ],
+    };
+  },
+]);

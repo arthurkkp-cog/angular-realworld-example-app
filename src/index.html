@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html ng-app="conduitApp">
   <head>
     <meta charset="utf-8" />
     <title>Conduit</title>
@@ -13,8 +13,16 @@
       type="text/css"
     />
     <link rel="stylesheet" href="//demo.productionready.io/main.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular-route.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular-sanitize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
-    <app-root></app-root>
+    <div>
+      <app-layout-header></app-layout-header>
+      <ng-view></ng-view>
+      <app-layout-footer></app-layout-footer>
+    </div>
   </body>
 </html>

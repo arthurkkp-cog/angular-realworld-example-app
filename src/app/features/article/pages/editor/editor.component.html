@@ -2,14 +2,14 @@
   <div class="container page">
     <div class="row">
       <div class="col-md-10 offset-md-1 col-xs-12">
-        <app-list-errors [errors]="errors" />
+        <app-list-errors errors="errors"></app-list-errors>
 
-        <form [formGroup]="articleForm">
-          <fieldset [disabled]="isSubmitting">
+        <form name="articleForm">
+          <fieldset ng-disabled="isSubmitting">
             <fieldset class="form-group">
               <input
                 class="form-control form-control-lg"
-                formControlName="title"
+                ng-model="formData.title"
                 type="text"
                 placeholder="Article Title"
               />
@@ -18,7 +18,7 @@
             <fieldset class="form-group">
               <input
                 class="form-control"
-                formControlName="description"
+                ng-model="formData.description"
                 type="text"
                 placeholder="What's this article about?"
               />
@@ -27,11 +27,10 @@
             <fieldset class="form-group">
               <textarea
                 class="form-control"
-                formControlName="body"
+                ng-model="formData.body"
                 rows="8"
                 placeholder="Write your article (in markdown)"
-              >
-              </textarea>
+              ></textarea>
             </fieldset>
 
             <fieldset class="form-group">
@@ -39,20 +38,18 @@
                 class="form-control"
                 type="text"
                 placeholder="Enter tags"
-                [formControl]="tagField"
-                (keyup.enter)="addTag()"
+                ng-model="tagField"
+                ng-keypress="$event.keyCode === 13 && addTag()"
               />
               <div class="tag-list">
-                @for (tag of tagList; track tag) {
-                  <span class="tag-default tag-pill">
-                    <i class="ion-close-round" (click)="removeTag(tag)"></i>
-                    {{ tag }}
-                  </span>
-                }
+                <span ng-repeat="tag in tagList track by $index" class="tag-default tag-pill">
+                  <i class="ion-close-round" ng-click="removeTag(tag)"></i>
+                  {{ tag }}
+                </span>
               </div>
             </fieldset>
 
-            <button class="btn btn-lg pull-xs-right btn-primary" type="button" (click)="submitForm()">
+            <button class="btn btn-lg pull-xs-right btn-primary" type="button" ng-click="submitForm()">
               Publish Article
             </button>
           </fieldset>

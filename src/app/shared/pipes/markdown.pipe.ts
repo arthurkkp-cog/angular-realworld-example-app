@@ -1,14 +1,17 @@
-import { inject, Pipe, PipeTransform, SecurityContext } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+// AngularJS Markdown Filter
+// Converts markdown content to HTML using the marked library
+// Note: The marked library is loaded via CDN in index.html
 
-@Pipe({
-  name: 'markdown',
-  standalone: true,
-})
-export class MarkdownPipe implements PipeTransform {
-  domSanitizer = inject(DomSanitizer);
-  async transform(content: string): Promise<string> {
-    const { marked } = await import('marked');
-    return this.domSanitizer.sanitize(SecurityContext.HTML, marked.parse(content)) || '';
-  }
-}
+angular.module('conduitApp').filter('markdown', [
+  '$sce',
+  function ($sce: angular.ISCEService) {
+    return function (content: string): any {
+      if (!content) {
+        return '';
+      }
+      // marked is loaded globally via CDN
+      const html = (window as any).marked.parse(content);
+      return $sce.trustAsHtml(html);
+    };
+  },
+]);

@@ -1,14 +1,39 @@
-import { Component, Input } from '@angular/core';
-import { Errors } from '../../core/models/errors.model';
+// AngularJS List Errors Directive
+// Displays error messages from API responses
 
-@Component({
-  selector: 'app-list-errors',
-  templateUrl: './list-errors.component.html',
-})
-export class ListErrorsComponent {
-  errorList: string[] = [];
-
-  @Input() set errors(errorList: Errors | null) {
-    this.errorList = errorList ? Object.keys(errorList.errors || {}).map(key => `${key} ${errorList.errors[key]}`) : [];
-  }
+interface Errors {
+  errors: { [key: string]: string[] };
 }
+
+angular.module('conduitApp').directive('appListErrors', [
+  function () {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/shared/components/list-errors.component.html',
+      scope: {
+        errors: '=',
+      },
+      controller: [
+        '$scope',
+        function (
+          $scope: angular.IScope & {
+            errors: Errors | null;
+            errorList: string[];
+          },
+        ) {
+          $scope.errorList = [];
+
+          $scope.$watch('errors', function (newErrors: Errors | null) {
+            if (newErrors && newErrors.errors) {
+              $scope.errorList = Object.keys(newErrors.errors).map(function (key) {
+                return key + ' ' + newErrors.errors[key];
+              });
+            } else {
+              $scope.errorList = [];
+            }
+          });
+        },
+      ],
+    };
+  },
+]);

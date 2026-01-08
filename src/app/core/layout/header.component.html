@@ -1,52 +1,46 @@
 <nav class="navbar navbar-light">
   <div class="container">
-    <a class="navbar-brand" routerLink="/">conduit</a>
+    <a class="navbar-brand" ng-href="#!/">conduit</a>
 
     <!-- Show this for logged out users -->
-    <ul *ifAuthenticated="false" class="nav navbar-nav pull-xs-right">
+    <ul ng-if="!isAuthenticated" class="nav navbar-nav pull-xs-right">
       <li class="nav-item">
-        <a class="nav-link" routerLink="/"> Home </a>
+        <a class="nav-link" ng-href="#!/" ng-class="{ active: isActive('/') }">Home</a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" routerLink="/login" routerLinkActive="active"> Sign in </a>
+        <a class="nav-link" ng-href="#!/login" ng-class="{ active: isActive('/login') }">Sign in</a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" routerLink="/register" routerLinkActive="active"> Sign up </a>
+        <a class="nav-link" ng-href="#!/register" ng-class="{ active: isActive('/register') }">Sign up</a>
       </li>
     </ul>
 
     <!-- Show this for logged in users -->
-    <ul *ifAuthenticated="true" class="nav navbar-nav pull-xs-right">
+    <ul ng-if="isAuthenticated" class="nav navbar-nav pull-xs-right">
       <li class="nav-item">
-        <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          Home
-        </a>
+        <a class="nav-link" ng-href="#!/" ng-class="{ active: isActive('/') }">Home</a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" routerLink="/editor" routerLinkActive="active">
+        <a class="nav-link" ng-href="#!/editor" ng-class="{ active: isActive('/editor') }">
           <i class="ion-compose"></i>&nbsp;New Article
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" routerLink="/settings" routerLinkActive="active">
+        <a class="nav-link" ng-href="#!/settings" ng-class="{ active: isActive('/settings') }">
           <i class="ion-gear-a"></i>&nbsp;Settings
         </a>
       </li>
 
-      @if (currentUser$ | async; as currentUser) {
-        <li class="nav-item">
-          <a class="nav-link" [routerLink]="['/profile', currentUser.username]" routerLinkActive="active">
-            @if (currentUser.image) {
-              <img [src]="currentUser.image" class="user-pic" />
-            }
-            {{ currentUser.username }}
-          </a>
-        </li>
-      }
+      <li class="nav-item" ng-if="currentUser">
+        <a class="nav-link" ng-href="#!/profile/{{ currentUser.username }}">
+          <img ng-if="currentUser.image" ng-src="{{ currentUser.image }}" class="user-pic" />
+          {{ currentUser.username }}
+        </a>
+      </li>
     </ul>
   </div>
 </nav>

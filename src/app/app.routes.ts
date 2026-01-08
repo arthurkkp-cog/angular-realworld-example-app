@@ -1,49 +1,18 @@
-import { Routes } from '@angular/router';
-import { inject } from '@angular/core';
-import { UserService } from './core/auth/services/user.service';
-import { map } from 'rxjs/operators';
+// AngularJS Routes
+// Routes are now configured in app.config.ts using $routeProvider
+// This file is kept for reference only
 
-export const routes: Routes = [
-  {
-    path: '',
-    loadComponent: () => import('./features/article/pages/home/home.component'),
-  },
-  {
-    path: 'login',
-    loadComponent: () => import('./core/auth/auth.component'),
-    canActivate: [() => inject(UserService).isAuthenticated.pipe(map(isAuth => !isAuth))],
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./core/auth/auth.component'),
-    canActivate: [() => inject(UserService).isAuthenticated.pipe(map(isAuth => !isAuth))],
-  },
-  {
-    path: 'settings',
-    loadComponent: () => import('./features/settings/settings.component'),
-    canActivate: [() => inject(UserService).isAuthenticated],
-  },
-  {
-    path: 'profile',
-    loadChildren: () => import('./features/profile/profile.routes'),
-  },
-  {
-    path: 'editor',
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/article/pages/editor/editor.component'),
-        canActivate: [() => inject(UserService).isAuthenticated],
-      },
-      {
-        path: ':slug',
-        loadComponent: () => import('./features/article/pages/editor/editor.component'),
-        canActivate: [() => inject(UserService).isAuthenticated],
-      },
-    ],
-  },
-  {
-    path: 'article/:slug',
-    loadComponent: () => import('./features/article/pages/article/article.component'),
-  },
-];
+// Route configuration has been moved to app.config.ts
+// The following routes are configured:
+// - '/' -> HomeController
+// - '/login' -> AuthController (authType: 'login')
+// - '/register' -> AuthController (authType: 'register')
+// - '/settings' -> SettingsController (requires auth)
+// - '/editor' -> EditorController (requires auth)
+// - '/editor/:slug' -> EditorController (requires auth)
+// - '/article/:slug' -> ArticleController
+// - '/profile/:username' -> ProfileController
+// - '/profile/:username/favorites' -> ProfileController
+
+// Route guards are implemented in the $routeChangeStart event handler
+// in app.config.ts using UserService.isAuthenticated()

@@ -1,11 +1,9 @@
-import { Component } from '@angular/core';
-import { HeaderComponent } from './core/layout/header.component';
-import { RouterOutlet } from '@angular/router';
-import { FooterComponent } from './core/layout/footer.component';
+// AngularJS App Component
+// The main app layout is now handled in index.html with ng-view directive
+// Header and Footer are registered as AngularJS directives
 
-@Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  imports: [HeaderComponent, RouterOutlet, FooterComponent],
-})
-export class AppComponent {}
+// This file is kept for reference but the component is no longer used
+// in the AngularJS architecture. The layout structure is:
+// - app-layout-header directive
+// - ng-view (for route content)
+// - app-layout-footer directive

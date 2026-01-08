@@ -1,7 +1,15 @@
-import { HttpInterceptorFn } from '@angular/common/http';
-import { throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+// AngularJS Error Interceptor
+// Standardizes error responses by extracting the error property
 
-export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  return next(req).pipe(catchError(err => throwError(() => err.error)));
-};
+angular.module('conduitApp').factory('errorInterceptor', [
+  '$q',
+  function ($q: angular.IQService) {
+    return {
+      responseError: function (rejection: angular.IHttpResponse<any>): angular.IPromise<any> {
+        // Extract the error data from the response
+        const error = rejection.data || rejection;
+        return $q.reject(error);
+      },
+    };
+  },
+]);

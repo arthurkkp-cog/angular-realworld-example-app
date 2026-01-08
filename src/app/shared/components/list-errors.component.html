@@ -1,7 +1,3 @@
-@if (errorList) {
-  <ul class="error-messages">
-    @for (error of errorList; track error) {
-      <li>{{ error }}</li>
-    }
-  </ul>
-}
+<ul ng-if="errorList.length > 0" class="error-messages">
+  <li ng-repeat="error in errorList track by $index">{{ error }}</li>
+</ul>

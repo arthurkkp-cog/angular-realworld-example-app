@@ -4,39 +4,40 @@
       <div class="col-md-6 offset-md-3 col-xs-12">
         <h1 class="text-xs-center">{{ title }}</h1>
         <p class="text-xs-center">
-          @if (authType === 'register') {
-            <a [routerLink]="['/login']">Have an account?</a>
-          }
-
-          @if (authType === 'login') {
-            <a [routerLink]="['/register']">Need an account?</a>
-          }
+          <a ng-if="authType === 'register'" ng-href="#!/login">Have an account?</a>
+          <a ng-if="authType === 'login'" ng-href="#!/register">Need an account?</a>
         </p>
-        <app-list-errors [errors]="errors" />
-        <form [formGroup]="authForm" (ngSubmit)="submitForm()">
-          <fieldset [disabled]="isSubmitting">
-            <fieldset class="form-group">
-              @if (authType === 'register') {
-                <input
-                  formControlName="username"
-                  placeholder="Username"
-                  class="form-control form-control-lg"
-                  type="text"
-                />
-              }
-            </fieldset>
-            <fieldset class="form-group">
-              <input formControlName="email" placeholder="Email" class="form-control form-control-lg" type="text" />
+        <app-list-errors errors="errors"></app-list-errors>
+        <form name="authForm" ng-submit="submitForm()">
+          <fieldset ng-disabled="isSubmitting">
+            <fieldset class="form-group" ng-if="authType === 'register'">
+              <input
+                ng-model="formData.username"
+                placeholder="Username"
+                class="form-control form-control-lg"
+                type="text"
+                required
+              />
             </fieldset>
             <fieldset class="form-group">
               <input
-                formControlName="password"
+                ng-model="formData.email"
+                placeholder="Email"
+                class="form-control form-control-lg"
+                type="text"
+                required
+              />
+            </fieldset>
+            <fieldset class="form-group">
+              <input
+                ng-model="formData.password"
                 placeholder="Password"
                 class="form-control form-control-lg"
                 type="password"
+                required
               />
             </fieldset>
-            <button class="btn btn-lg btn-primary pull-xs-right" [disabled]="!authForm.valid" type="submit">
+            <button class="btn btn-lg btn-primary pull-xs-right" ng-disabled="authForm.$invalid" type="submit">
               {{ title }}
             </button>
           </fieldset>

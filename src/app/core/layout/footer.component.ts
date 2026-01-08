@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+// AngularJS Footer Directive
+// Static footer component
 
-@Component({
-  selector: 'app-layout-footer',
-  templateUrl: './footer.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink],
-})
-export class FooterComponent {
-  today: number = Date.now();
-}
+angular.module('conduitApp').directive('appLayoutFooter', [
+  function () {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/core/layout/footer.component.html',
+      controller: [
+        '$scope',
+        function ($scope: angular.IScope & { today: Date }) {
+          $scope.today = new Date();
+        },
+      ],
+    };
+  },
+]);
