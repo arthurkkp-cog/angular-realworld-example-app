@@ -20,7 +20,7 @@ export const articleService = {
   },
 
   createArticle: async (article: Partial<Article>): Promise<Article> => {
-    const response = await api.post<{ article: Article }>('/articles/', { article });
+    const response = await api.post<{ article: Article }>('/articles', { article });
     return response.data.article;
   },
 
