@@ -10,7 +10,7 @@
                 <div class="col-md-10 offset-md-1 col-xs-12">
                     <ul th:replace="~{fragments/errors :: errors}"></ul>
 
-                    <form th:action="${isEdit ? '/editor/' + article.slug : '/editor'}" method="post">
+                    <form th:action="${isEdit != null and isEdit ? '/editor/' + article.slug : '/editor'}" method="post">
                         <fieldset>
                             <fieldset class="form-group">
                                 <input type="text" class="form-control form-control-lg" 
@@ -37,7 +37,7 @@
                                 </div>
                             </fieldset>
                             <button class="btn btn-lg pull-xs-right btn-primary" type="submit">
-                                <span th:text="${isEdit ? 'Update Article' : 'Publish Article'}"></span>
+                                <span th:text="${isEdit != null and isEdit ? 'Update Article' : 'Publish Article'}"></span>
                             </button>
                         </fieldset>
                     </form>
