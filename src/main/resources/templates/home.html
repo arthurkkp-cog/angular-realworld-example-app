@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <div class="home-page">
+        <div th:if="${currentUser == null}" class="banner">
+            <div class="container">
+                <h1 class="logo-font">conduit</h1>
+                <p>A place to share your knowledge.</p>
+            </div>
+        </div>
+
+        <div class="container page">
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="feed-toggle">
+                        <ul class="nav nav-pills outline-active">
+                            <li th:if="${currentUser != null}" class="nav-item">
+                                <a class="nav-link" th:classappend="${feed == 'feed' ? 'active' : ''}" 
+                                   th:href="@{/(feed=feed)}">Your Feed</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" 
+                                   th:classappend="${feed == 'all' and selectedTag == null ? 'active' : ''}" 
+                                   th:href="@{/(feed=all)}">Global Feed</a>
+                            </li>
+                            <li th:if="${selectedTag != null}" class="nav-item">
+                                <a class="nav-link active">
+                                    <i class="ion-pound"></i> <span th:text="${selectedTag}"></span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(articles)}" class="article-preview">
+                        No articles are here... yet.
+                    </div>
+
+                    <div th:each="article : ${articles}">
+                        <div th:replace="~{fragments/article-preview :: article-preview}"></div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav th:if="${totalPages > 1}">
+                        <ul class="pagination">
+                            <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                                class="page-item" th:classappend="${i == currentPage ? 'active' : ''}">
+                                <a class="page-link" th:href="@{/(feed=${feed}, tag=${selectedTag}, page=${i})}" 
+                                   th:text="${i + 1}"></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="sidebar">
+                        <p>Popular Tags</p>
+                        <div class="tag-list">
+                            <a th:each="tag : ${tags}" class="tag-default tag-pill" 
+                               th:href="@{/(tag=${tag})}" th:text="${tag}"></a>
+                        </div>
+                        <div th:if="${#lists.isEmpty(tags)}">No tags are here... yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

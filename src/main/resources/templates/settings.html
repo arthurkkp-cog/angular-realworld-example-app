@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <div class="settings-page">
+        <div class="container page">
+            <div class="row">
+                <div class="col-md-6 offset-md-3 col-xs-12">
+                    <h1 class="text-xs-center">Your Settings</h1>
+
+                    <ul th:replace="~{fragments/errors :: errors}"></ul>
+
+                    <form th:action="@{/settings}" method="post">
+                        <fieldset>
+                            <fieldset class="form-group">
+                                <input class="form-control" type="text" 
+                                       name="image" placeholder="URL of profile picture"
+                                       th:value="${currentUser.image}">
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <input class="form-control form-control-lg" type="text" 
+                                       name="username" placeholder="Your Name"
+                                       th:value="${currentUser.username}">
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <textarea class="form-control form-control-lg" rows="8" 
+                                          name="bio" placeholder="Short bio about you"
+                                          th:text="${currentUser.bio}"></textarea>
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <input class="form-control form-control-lg" type="text" 
+                                       name="email" placeholder="Email"
+                                       th:value="${currentUser.email}">
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <input class="form-control form-control-lg" type="password" 
+                                       name="password" placeholder="New Password">
+                            </fieldset>
+                            <button class="btn btn-lg btn-primary pull-xs-right" type="submit">
+                                Update Settings
+                            </button>
+                        </fieldset>
+                    </form>
+                    <hr />
+                    <a class="btn btn-outline-danger" th:href="@{/logout}">
+                        Or click here to logout.
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

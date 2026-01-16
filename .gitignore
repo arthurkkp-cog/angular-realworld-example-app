@@ -1,18 +1,17 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# compiled output
-/dist
-/tmp
-/out-tsc
-
-# dependencies
-/node_modules
+# Gradle
+.gradle/
+build/
+bin/
+!gradle/wrapper/gradle-wrapper.jar
 
 # IDEs and editors
 .vscode/
 /.idea
 .project
 .classpath
+.factorypath
 .c9/
 *.launch
 .settings/
@@ -25,25 +24,9 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# misc
-/.angular/cache
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-testem.log
-/typings
-yarn-error.log
-
-# e2e
-/e2e/*.js
-/e2e/*.map
-
-# Playwright
-/playwright-report/
-/test-results/
-
 # System Files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log

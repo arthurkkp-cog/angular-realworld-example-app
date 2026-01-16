@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <div class="profile-page">
+        <div class="user-info">
+            <div class="container">
+                <div class="row">
+                    <div class="col-xs-12 col-md-10 offset-md-1">
+                        <img th:src="${profile.image != null ? profile.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" class="user-img" />
+                        <h4 th:text="${profile.username}"></h4>
+                        <p th:text="${profile.bio}"></p>
+                        
+                        <a th:if="${isUser}" class="btn btn-sm btn-outline-secondary action-btn" th:href="@{/settings}">
+                            <i class="ion-gear-a"></i> Edit Profile Settings
+                        </a>
+                        
+                        <form th:if="${!isUser and currentUser != null}" 
+                              th:action="${following ? '/profile/' + profile.username + '/unfollow' : '/profile/' + profile.username + '/follow'}" 
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm action-btn" 
+                                    th:classappend="${following ? 'btn-secondary' : 'btn-outline-secondary'}">
+                                <i class="ion-plus-round"></i>
+                                &nbsp; <span th:text="${following ? 'Unfollow' : 'Follow'}"></span> 
+                                <span th:text="${profile.username}"></span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12 col-md-10 offset-md-1">
+                    <div class="articles-toggle">
+                        <ul class="nav nav-pills outline-active">
+                            <li class="nav-item">
+                                <a class="nav-link" th:classappend="${tab == 'articles' ? 'active' : ''}" 
+                                   th:href="@{/profile/{username}(username=${profile.username}, tab=articles)}">My Articles</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" th:classappend="${tab == 'favorites' ? 'active' : ''}" 
+                                   th:href="@{/profile/{username}(username=${profile.username}, tab=favorites)}">Favorited Articles</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(articles)}" class="article-preview">
+                        No articles are here... yet.
+                    </div>
+
+                    <div th:each="article : ${articles}">
+                        <div th:replace="~{fragments/article-preview :: article-preview}"></div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav th:if="${totalPages > 1}">
+                        <ul class="pagination">
+                            <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                                class="page-item" th:classappend="${i == currentPage ? 'active' : ''}">
+                                <a class="page-link" 
+                                   th:href="@{/profile/{username}(username=${profile.username}, tab=${tab}, page=${i})}" 
+                                   th:text="${i + 1}"></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

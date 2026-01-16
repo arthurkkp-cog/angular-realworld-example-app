@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<ul th:fragment="errors" th:if="${errors != null}" class="error-messages">
+    <li th:each="entry : ${errors}">
+        <span th:text="${entry.key}"></span> <span th:text="${entry.value}"></span>
+    </li>
+</ul>
+</body>
+</html>

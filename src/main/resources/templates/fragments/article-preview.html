@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="article-preview" class="article-preview">
+    <div class="article-meta">
+        <a th:href="@{/profile/{username}(username=${article.author.username})}">
+            <img th:src="${article.author.image != null ? article.author.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" />
+        </a>
+        <div class="info">
+            <a th:href="@{/profile/{username}(username=${article.author.username})}" class="author" th:text="${article.author.username}"></a>
+            <span class="date" th:text="${#temporals.format(article.createdAt, 'MMMM d, yyyy')}"></span>
+        </div>
+        <form th:if="${currentUser != null}" 
+              th:action="${__${#ctx.getVariable('favorited_' + article.id)}__ ? '/article/' + article.slug + '/unfavorite' : '/article/' + article.slug + '/favorite'}" 
+              method="post" style="display: inline;">
+            <button type="submit" class="btn btn-outline-primary btn-sm pull-xs-right"
+                    th:classappend="${__${#ctx.getVariable('favorited_' + article.id)}__ ? 'btn-primary' : 'btn-outline-primary'}">
+                <i class="ion-heart"></i>
+                <span th:text="${__${#ctx.getVariable('favoritesCount_' + article.id)}__}"></span>
+            </button>
+        </form>
+        <button th:if="${currentUser == null}" class="btn btn-outline-primary btn-sm pull-xs-right" disabled>
+            <i class="ion-heart"></i>
+            <span th:text="${__${#ctx.getVariable('favoritesCount_' + article.id)}__}"></span>
+        </button>
+    </div>
+    <a th:href="@{/article/{slug}(slug=${article.slug})}" class="preview-link">
+        <h1 th:text="${article.title}"></h1>
+        <p th:text="${article.description}"></p>
+        <span>Read more...</span>
+        <ul class="tag-list">
+            <li th:each="tag : ${article.tags}" class="tag-default tag-pill tag-outline" th:text="${tag.name}"></li>
+        </ul>
+    </a>
+</div>
+</body>
+</html>
