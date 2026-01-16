@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <div class="article-page">
+        <div class="banner">
+            <div class="container">
+                <h1 th:text="${article.title}"></h1>
+
+                <div class="article-meta">
+                    <a th:href="@{/profile/{username}(username=${article.author.username})}">
+                        <img th:src="${article.author.image != null ? article.author.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" />
+                    </a>
+                    <div class="info">
+                        <a th:href="@{/profile/{username}(username=${article.author.username})}" class="author" 
+                           th:text="${article.author.username}"></a>
+                        <span class="date" th:text="${#temporals.format(article.createdAt, 'MMMM d, yyyy')}"></span>
+                    </div>
+
+                    <span th:if="${canModify}">
+                        <a class="btn btn-outline-secondary btn-sm" th:href="@{/editor/{slug}(slug=${article.slug})}">
+                            <i class="ion-edit"></i> Edit Article
+                        </a>
+                        <form th:action="@{/article/{slug}/delete(slug=${article.slug})}" method="post" style="display: inline;">
+                            <button class="btn btn-outline-danger btn-sm" type="submit">
+                                <i class="ion-trash-a"></i> Delete Article
+                            </button>
+                        </form>
+                    </span>
+
+                    <span th:if="${!canModify}">
+                        <form th:if="${currentUser != null}" 
+                              th:action="${following ? '/profile/' + article.author.username + '/unfollow' : '/profile/' + article.author.username + '/follow'}" 
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm" 
+                                    th:classappend="${following ? 'btn-secondary' : 'btn-outline-secondary'}">
+                                <i class="ion-plus-round"></i>
+                                &nbsp; <span th:text="${following ? 'Unfollow' : 'Follow'}"></span> 
+                                <span th:text="${article.author.username}"></span>
+                            </button>
+                        </form>
+                        <form th:if="${currentUser != null}" 
+                              th:action="${favorited ? '/article/' + article.slug + '/unfavorite' : '/article/' + article.slug + '/favorite'}" 
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm" 
+                                    th:classappend="${favorited ? 'btn-primary' : 'btn-outline-primary'}">
+                                <i class="ion-heart"></i>
+                                &nbsp; <span th:text="${favorited ? 'Unfavorite' : 'Favorite'}"></span> Article 
+                                <span class="counter" th:text="'(' + ${favoritesCount} + ')'"></span>
+                            </button>
+                        </form>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="container page">
+            <div class="row article-content">
+                <div class="col-md-12">
+                    <div th:utext="${bodyHtml}"></div>
+                    <ul class="tag-list">
+                        <li th:each="tag : ${article.tags}" class="tag-default tag-pill tag-outline" 
+                            th:text="${tag.name}"></li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="article-actions">
+                <div class="article-meta">
+                    <a th:href="@{/profile/{username}(username=${article.author.username})}">
+                        <img th:src="${article.author.image != null ? article.author.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" />
+                    </a>
+                    <div class="info">
+                        <a th:href="@{/profile/{username}(username=${article.author.username})}" class="author" 
+                           th:text="${article.author.username}"></a>
+                        <span class="date" th:text="${#temporals.format(article.createdAt, 'MMMM d, yyyy')}"></span>
+                    </div>
+
+                    <span th:if="${canModify}">
+                        <a class="btn btn-outline-secondary btn-sm" th:href="@{/editor/{slug}(slug=${article.slug})}">
+                            <i class="ion-edit"></i> Edit Article
+                        </a>
+                        <form th:action="@{/article/{slug}/delete(slug=${article.slug})}" method="post" style="display: inline;">
+                            <button class="btn btn-outline-danger btn-sm" type="submit">
+                                <i class="ion-trash-a"></i> Delete Article
+                            </button>
+                        </form>
+                    </span>
+
+                    <span th:if="${!canModify}">
+                        <form th:if="${currentUser != null}" 
+                              th:action="${following ? '/profile/' + article.author.username + '/unfollow' : '/profile/' + article.author.username + '/follow'}" 
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm" 
+                                    th:classappend="${following ? 'btn-secondary' : 'btn-outline-secondary'}">
+                                <i class="ion-plus-round"></i>
+                                &nbsp; <span th:text="${following ? 'Unfollow' : 'Follow'}"></span> 
+                                <span th:text="${article.author.username}"></span>
+                            </button>
+                        </form>
+                        <form th:if="${currentUser != null}" 
+                              th:action="${favorited ? '/article/' + article.slug + '/unfavorite' : '/article/' + article.slug + '/favorite'}" 
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm" 
+                                    th:classappend="${favorited ? 'btn-primary' : 'btn-outline-primary'}">
+                                <i class="ion-heart"></i>
+                                &nbsp; <span th:text="${favorited ? 'Unfavorite' : 'Favorite'}"></span> Article 
+                                <span class="counter" th:text="'(' + ${favoritesCount} + ')'"></span>
+                            </button>
+                        </form>
+                    </span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12 col-md-8 offset-md-2">
+                    <div th:if="${currentUser != null}">
+                        <form class="card comment-form" th:action="@{/article/{slug}/comments(slug=${article.slug})}" method="post">
+                            <div class="card-block">
+                                <textarea class="form-control" name="body" placeholder="Write a comment..." rows="3" required></textarea>
+                            </div>
+                            <div class="card-footer">
+                                <img th:src="${currentUser.image != null ? currentUser.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" class="comment-author-img" />
+                                <button class="btn btn-sm btn-primary" type="submit">Post Comment</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <p th:if="${currentUser == null}">
+                        <a th:href="@{/login}">Sign in</a> or <a th:href="@{/register}">sign up</a> to add comments on this article.
+                    </p>
+
+                    <div th:each="comment : ${comments}" class="card">
+                        <div class="card-block">
+                            <p class="card-text" th:text="${comment.body}"></p>
+                        </div>
+                        <div class="card-footer">
+                            <a th:href="@{/profile/{username}(username=${comment.author.username})}" class="comment-author">
+                                <img th:src="${comment.author.image != null ? comment.author.image : 'https://static.productionready.io/images/smiley-cyrus.jpg'}" class="comment-author-img" />
+                            </a>
+                            &nbsp;
+                            <a th:href="@{/profile/{username}(username=${comment.author.username})}" class="comment-author" 
+                               th:text="${comment.author.username}"></a>
+                            <span class="date-posted" th:text="${#temporals.format(comment.createdAt, 'MMMM d, yyyy')}"></span>
+                            <span th:if="${currentUser != null and currentUser.username == comment.author.username}" class="mod-options">
+                                <form th:action="@{/article/{slug}/comments/{commentId}/delete(slug=${article.slug}, commentId=${comment.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" style="background: none; border: none; cursor: pointer;">
+                                        <i class="ion-trash-a"></i>
+                                    </button>
+                                </form>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+
+    <div class="editor-page">
+        <div class="container page">
+            <div class="row">
+                <div class="col-md-10 offset-md-1 col-xs-12">
+                    <ul th:replace="~{fragments/errors :: errors}"></ul>
+
+                    <form th:action="${isEdit ? '/editor/' + article.slug : '/editor'}" method="post">
+                        <fieldset>
+                            <fieldset class="form-group">
+                                <input type="text" class="form-control form-control-lg" 
+                                       name="title" placeholder="Article Title"
+                                       th:value="${article != null ? article.title : ''}" required>
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <input type="text" class="form-control" 
+                                       name="description" placeholder="What's this article about?"
+                                       th:value="${article != null ? article.description : ''}" required>
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <textarea class="form-control" rows="8" 
+                                          name="body" placeholder="Write your article (in markdown)"
+                                          required th:text="${article != null ? article.body : ''}"></textarea>
+                            </fieldset>
+                            <fieldset class="form-group">
+                                <input type="text" class="form-control" 
+                                       name="tags" placeholder="Enter tags (comma separated)"
+                                       th:value="${tagList != null ? tagList : ''}">
+                                <div class="tag-list">
+                                    <span th:if="${article != null}" th:each="tag : ${article.tags}" 
+                                          class="tag-default tag-pill" th:text="${tag.name}"></span>
+                                </div>
+                            </fieldset>
+                            <button class="btn btn-lg pull-xs-right btn-primary" type="submit">
+                                <span th:text="${isEdit ? 'Update Article' : 'Publish Article'}"></span>
+                            </button>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
