@@ -31,8 +31,8 @@
                                 <input type="text" class="form-control" 
                                        name="tags" placeholder="Enter tags (comma separated)"
                                        th:value="${tagList != null ? tagList : ''}">
-                                <div class="tag-list">
-                                    <span th:if="${article != null}" th:each="tag : ${article.tags}" 
+                                <div class="tag-list" th:if="${article != null and article.tags != null}">
+                                    <span th:each="tag : ${article.tags}" 
                                           class="tag-default tag-pill" th:text="${tag.name}"></span>
                                 </div>
                             </fieldset>
